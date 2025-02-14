@@ -1,0 +1,46 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+}
+
+body {
+	font-family: "Poppins", sans-serif;
+	font-size: 16px;
+	background: var(--color-primary);
+	color: #000000;
+	overflow-x: hidden;
+	padding: 16px;
+}
+
+ul {
+	list-style: none;
+	padding: 10px;
+}
+
+/* Notification container */
+#notification-container {
+	position: fixed;
+	top: 20px;
+	right: 20px;
+	z-index: 1000;
+}
+
+/* Toast notification style */
+.toast {
+	background-color: #333;
+	color: #fff;
+	padding: 10px 20px;
+	margin-bottom: 10px;
+	border-radius: 4px;
+	opacity: 0;
+	transform: translateY(-20px);
+	transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast.show {
+	opacity: 1;
+	transform: translateY(0);
+}

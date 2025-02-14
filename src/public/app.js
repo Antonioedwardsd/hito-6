@@ -1,14 +1,13 @@
-const socket = io();
+const socket = io("/chat");
+
+let currentRoom = "";
 
 // Connection handling
 socket.on("connect", () => {
 	console.log("Connected to the server");
 
-	// Perform login by sending a custom username
-	const username = prompt(
-		"Enter your username",
-		"User" + Math.floor(Math.random() * 1000)
-	);
+	// Login by sending a custom username
+	const username = prompt("Enter your username");
 	socket.emit("join", { username });
 });
 
@@ -20,11 +19,13 @@ socket.on("welcome", (data) => {
 // Display new messages
 socket.on("newMessage", (message) => {
 	console.log("New message:", message);
-	const messagesDiv = document.getElementById("messages");
-	messagesDiv.innerHTML += `<p><strong>${message.username}:</strong> ${message.content}</p>`;
+	const messagesList = document.getElementById("messages");
+	const messageItem = document.createElement("li");
+	messageItem.textContent = `${message.username}: ${message.content}`;
+	messagesList.appendChild(messageItem);
 });
 
-// Update the online users list
+// Update the online users
 socket.on("userJoined", (data) => {
 	updateUserList(data.onlineUsers);
 });
@@ -36,23 +37,80 @@ socket.on("userLeft", (data) => {
 // Function to send messages
 function sendMessage() {
 	const input = document.getElementById("messageInput");
+	if (!currentRoom) {
+		showToast("You must join a room first😉!");
+		input.value = "";
+		return;
+	}
 	const content = input.value.trim();
 	if (content) {
-		socket.emit("message", { content });
+		socket.emit("message", { content, room: currentRoom });
 		input.value = "";
+	}
+}
+
+// Listen for form submission to send a message
+document.getElementById("messageForm").addEventListener("submit", function (e) {
+	e.preventDefault();
+	sendMessage();
+});
+
+// Join a room
+function joinRoom(room) {
+	currentRoom = room;
+	socket.emit("joinRoom", room);
+}
+
+// Leave the current room
+function leaveRoom() {
+	if (currentRoom) {
+		socket.emit("leaveRoom", currentRoom);
+		currentRoom = "";
+
+		document.getElementById("messages").innerHTML = "";
 	}
 }
 
 // Update the list of users
 function updateUserList(users) {
 	const userList = document.getElementById("userList");
-	userList.innerHTML = "<h3>Online Users:</h3>";
+	// Clear the current list
+	userList.innerHTML = "";
+
+	const title = document.createElement("h3");
+	title.textContent = "Online Users:";
+	userList.appendChild(title);
+
 	users.forEach((user) => {
-		userList.innerHTML += `<div>${user.username}</div>`;
+		const userItem = document.createElement("div");
+		userItem.textContent = user.username;
+		userList.appendChild(userItem);
 	});
+}
+
+function showToast(message, duration = 3000) {
+	const container = document.getElementById("notification-container");
+	const toast = document.createElement("div");
+	toast.className = "toast";
+	toast.textContent = message;
+	container.appendChild(toast);
+
+	toast.offsetHeight;
+	toast.classList.add("show");
+
+	setTimeout(() => {
+		toast.classList.remove("show");
+		toast.addEventListener("transitionend", () => {
+			toast.remove();
+		});
+	}, duration);
 }
 
 // Handle errors
 socket.on("error", (error) => {
 	console.error("Server error:", error);
+});
+
+socket.on("reconnect_attempt", () => {
+	console.log("Reconnection attempt...");
 });
