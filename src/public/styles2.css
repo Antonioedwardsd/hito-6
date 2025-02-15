@@ -1,0 +1,416 @@
+/* ====================================================
+   Reset
+==================================================== */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+/* ====================================================
+   Root Variables (Light Theme)
+==================================================== */
+:root {
+	/* Colors */
+	--color-primary: #f8f9fa;
+	--color-secondary: #2c3e50;
+	--color-accent: #3498db;
+	--color-success: #27ae60;
+	--color-error: #e74c3c;
+	--text-primary: #2c3e50;
+	--text-secondary: #ffffff;
+
+	/* Spacing */
+	--spacing-sm: 0.5rem;
+	--spacing-md: 1rem;
+	--spacing-lg: 1.5rem;
+
+	/* Border */
+	--border-radius: 8px;
+	--border: 1px solid #dfe6e9;
+
+	/* Shadows */
+	--shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+	--shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* ====================================================
+   Dark Theme Variables
+==================================================== */
+@media (prefers-color-scheme: dark) {
+	:root {
+		--color-primary: #2c3e50;
+		--color-secondary: #34495e;
+		--text-primary: #ecf0f1;
+	}
+}
+
+/* ====================================================
+   Base Styles
+==================================================== */
+body {
+	font-family: "Poppins", sans-serif;
+	line-height: 1.6;
+	background: var(--color-primary);
+	color: var(--text-primary);
+	padding: var(--spacing-md);
+}
+
+/* ====================================================
+   Utility Classes
+==================================================== */
+.hidden {
+	display: none !important;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+}
+
+/* ====================================================
+   Layout & Containers
+==================================================== */
+
+/* Login Container */
+#login-container {
+	max-width: 400px;
+	margin: 2rem auto;
+}
+
+#loginForm {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+}
+
+/* Chat Container */
+#chat-container {
+	display: grid;
+	grid-template-columns: 250px 1fr;
+	gap: var(--spacing-md);
+	max-width: 1200px;
+	margin: 0 auto;
+	height: 80vh;
+}
+
+/* Sidebar */
+#sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+	padding: var(--spacing-md);
+	background: var(--color-secondary);
+	color: var(--text-secondary);
+	border-radius: var(--border-radius);
+}
+
+.room-management {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+.new-room {
+	display: flex;
+	gap: var(--spacing-sm);
+}
+
+#roomList {
+	list-style: none;
+	overflow-y: auto;
+	flex-grow: 1;
+}
+
+.room-item {
+	padding: var(--spacing-sm);
+	border-radius: var(--border-radius);
+	cursor: pointer;
+	transition: background 0.2s;
+}
+
+.room-item:hover {
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.room-item.active {
+	background: var(--color-accent);
+	font-weight: bold;
+}
+
+/* Chat Area */
+#chatArea {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+	background: #fff;
+	padding: var(--spacing-md);
+	border-radius: var(--border-radius);
+	box-shadow: var(--shadow-md);
+}
+
+#chatHeader {
+	display: flex;
+	justify-content: space-between;
+	padding: var(--spacing-md);
+	background: var(--color-primary);
+	border-radius: var(--border-radius);
+	margin-bottom: var(--spacing-md);
+}
+
+#messages {
+	flex-grow: 1;
+	overflow-y: auto;
+	padding: var(--spacing-md);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+	scroll-behavior: smooth;
+}
+
+/* ====================================================
+   Mensajes
+==================================================== */
+.message {
+	max-width: 80%;
+	padding: var(--spacing-sm);
+	border-radius: var(--border-radius);
+	background: #fff;
+	animation: messageIn 0.3s ease;
+}
+
+.message:hover {
+	transform: translateX(5px);
+}
+
+.message-header {
+	display: flex;
+	align-items: baseline;
+	gap: var(--spacing-sm);
+	margin-bottom: 0.3rem;
+}
+
+.username {
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+.message.self {
+	align-self: flex-end;
+	background: var(--color-accent);
+	color: white;
+}
+
+.timestamp {
+	font-size: 0.75rem;
+	opacity: 0.8;
+}
+
+.content {
+	word-break: break-word;
+	line-height: 1.4;
+}
+
+/* ====================================================
+   Animaciones
+==================================================== */
+@keyframes messageIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* ====================================================
+   Typing Indicator
+==================================================== */
+#typingIndicator {
+	min-height: 20px;
+	font-style: italic;
+	color: #7f8c8d;
+}
+
+/* ====================================================
+   Message Form
+==================================================== */
+#messageForm {
+	display: flex;
+	gap: var(--spacing-sm);
+	padding-top: var(--spacing-md);
+	border-top: var(--border);
+}
+
+#messageInput {
+	padding: var(--spacing-sm) var(--spacing-md);
+	border: 2px solid var(--color-secondary);
+	border-radius: var(--border-radius);
+	transition: all 0.3s ease;
+}
+
+#messageInput:focus {
+	border-color: var(--color-accent);
+	box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+#newRoomInput {
+	padding: var(--spacing-sm);
+	border: 2px solid var(--color-secondary);
+	border-radius: var(--border-radius);
+	transition: all 0.3s ease;
+}
+
+.submitBtn {
+	color: white;
+	background: var(--color-accent);
+	padding: var(--spacing-sm) var(--spacing-md);
+	border-radius: var(--border-radius);
+	transition: all 0.3s ease;
+}
+
+.submitBtn:hover {
+	background: var(--color-secondary);
+	color: white;
+	transform: translateY(-1px);
+}
+
+#createRoomBtn {
+	color: white;
+	font-size: 1rem;
+	background: var(--color-accent);
+	border: none;
+	border-radius: var(--border-radius);
+	padding: var(--spacing-sm) var(--spacing-sm);
+	transition: all 0.3s ease;
+}
+
+#leaveRoomBtn {
+	color: white;
+	font-size: 1.5rem;
+	background: transparent;
+	border: none;
+	padding: var(--spacing-sm) var(--spacing-md);
+	transition: all 0.3s ease;
+}
+
+#leaveRoomBtn:hover {
+	background-color: rgba(231, 76, 60, 0.1);
+	color: #e74c3c;
+	border-radius: var(--border-radius);
+}
+
+#usernameInput {
+	padding: var(--spacing-sm);
+	border: 2px solid var(--color-secondary);
+	border-radius: var(--border-radius);
+	transition: all 0.3s ease;
+}
+
+.input-container {
+	flex-grow: 1;
+	position: relative;
+}
+
+#charCounter {
+	position: absolute;
+	right: var(--spacing-sm);
+	bottom: var(--spacing-sm);
+	font-size: 0.8rem;
+	color: #7f8c8d;
+}
+
+/* ====================================================
+   Notifications
+==================================================== */
+#notification-container {
+	position: fixed;
+	top: var(--spacing-md);
+	right: var(--spacing-md);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+.toast {
+	padding: var(--spacing-sm) var(--spacing-md);
+	border-radius: var(--border-radius);
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	animation: toastIn 0.3s ease;
+}
+
+.toast.success {
+	background: var(--color-success);
+	color: white;
+}
+
+.toast.error {
+	background: var(--color-error);
+	color: white;
+}
+
+.toast.info {
+	background: var(--color-secondary);
+	color: white;
+}
+
+@keyframes toastIn {
+	from {
+		transform: translateX(100%);
+	}
+	to {
+		transform: translateX(0);
+	}
+}
+
+/* ====================================================
+   Conection Status
+==================================================== */
+#connectionStatus::before {
+	content: "";
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	margin-right: 0.5rem;
+}
+
+#connectionStatus.connected::before {
+	background: var(--color-success);
+}
+
+#connectionStatus.disconnected::before {
+	background: var(--color-error);
+}
+
+/* ====================================================
+   Dark Theme 
+==================================================== */
+@media (prefers-color-scheme: dark) {
+	#chatArea {
+		background: var(--color-secondary);
+	}
+
+	.message {
+		background: rgba(255, 255, 255, 0.1);
+	}
+
+	.message.self {
+		background: var(--color-accent);
+	}
+
+	#messageInput {
+		background: #fff;
+		color: rgba(255, 255, 255, 0.1);
+	}
+}

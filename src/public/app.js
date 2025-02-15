@@ -1,3 +1,4 @@
+// src\public\app.js
 document.addEventListener("DOMContentLoaded", () => {
 	const socket = io("/chat");
 	let currentUser = null;
