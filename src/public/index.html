@@ -2,31 +2,83 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<title>Chat with Socket.IO</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>SocketChat - Real-Time Chat</title>
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="/app.js" defer></script>
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+		/>
 		<link rel="stylesheet" href="/styles.css" />
 	</head>
 	<body>
-		<h1>Socket.IO Chat</h1>
+		<h1>SocketChat <i class="fa-solid fa-comments"></i></h1>
+		<div class="main-container">
+			<div id="login-container">
+				<form id="loginForm">
+					<label for="usernameInput" class="sr-only">Username</label>
+					<input
+						type="text"
+						id="usernameInput"
+						placeholder="Enter username"
+						autofocus
+						required
+					/>
+					<button type="submit" class="submitBtn">Join Chat</button>
+				</form>
+			</div>
 
-		<ul id="userList"></ul>
-		<h3>Choose a Room:</h3>
-		<ul>
-			<li>
-				<button onclick="joinRoom('room1')">Room 1</button>
-				<button onclick="joinRoom('room2')">Room 2</button>
-				<button onclick="leaveRoom()">Leave Room</button>
-			</li>
-		</ul>
+			<div id="chat-container" class="hidden">
+				<aside id="sidebar">
+					<div class="room-management">
+						<h3><i class="fa-solid fa-door-open"></i> Rooms</h3>
+						<div class="new-room">
+							<input
+								type="text"
+								id="newRoomInput"
+								placeholder="New room name"
+							/>
+							<button id="createRoomBtn" class="iconBtn">
+								<i class="fa-solid fa-plus"></i>
+							</button>
+						</div>
+					</div>
+					<ul id="roomList"></ul>
+				</aside>
 
-		<ul id="messages"></ul>
+				<section id="chatArea">
+					<header id="chatHeader">
+						<div>
+							<h2 id="currentRoomName">Select a Room</h2>
+							<span id="connectionStatus" class="connected"></span>
+						</div>
+						<button id="leaveRoomBtn" class="submitBtn">
+							<i class="fa-solid fa-arrow-right-from-bracket"></i> Leave
+						</button>
+					</header>
 
-		<form id="messageForm">
-			<input type="text" id="messageInput" placeholder="Type a message..." />
-			<button type="submit">Send</button>
-		</form>
+					<ul id="messages"></ul>
 
-		<div id="notification-container"></div>
+					<div id="typingIndicator"></div>
+
+					<form id="messageForm" class="hidden">
+						<div class="input-container">
+							<input
+								type="text"
+								id="messageInput"
+								placeholder="Type your message..."
+								maxlength="500"
+							/>
+							<div id="charCounter">500/500</div>
+						</div>
+						<button type="submit" class="submitBtn">Send</button>
+					</form>
+				</section>
+			</div>
+
+			<div id="notification-container"></div>
+			<div aria-live="polite" class="sr-only" id="a11y-notifications"></div>
+		</div>
 	</body>
 </html>

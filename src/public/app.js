@@ -1,116 +1,250 @@
-const socket = io("/chat");
+document.addEventListener("DOMContentLoaded", () => {
+	const socket = io("/chat");
+	let currentUser = null;
+	let activeRoom = null;
+	const messageHistory = new Map();
+	let isTyping = false;
+	let typingTimeout = null;
 
-let currentRoom = "";
+	let connectedUsers = new Map();
 
-// Connection handling
-socket.on("connect", () => {
-	console.log("Connected to the server");
+	// DOM Elements
+	const loginContainer = document.getElementById("login-container");
+	const chatContainer = document.getElementById("chat-container");
+	const usernameInput = document.getElementById("usernameInput");
+	const loginForm = document.getElementById("loginForm");
+	const roomList = document.getElementById("roomList");
+	const newRoomInput = document.getElementById("newRoomInput");
+	const createRoomBtn = document.getElementById("createRoomBtn");
+	const messageForm = document.getElementById("messageForm");
+	const messageInput = document.getElementById("messageInput");
+	const messagesEl = document.getElementById("messages");
+	const charCounter = document.getElementById("charCounter");
+	const typingIndicator = document.getElementById("typingIndicator");
+	const currentRoomName = document.getElementById("currentRoomName");
+	const leaveRoomBtn = document.getElementById("leaveRoomBtn");
+	const connectionStatus = document.getElementById("connectionStatus");
 
-	// Login by sending a custom username
-	const username = prompt("Enter your username");
-	socket.emit("join", { username });
-});
+	// Event Listeners
+	loginForm.addEventListener("submit", handleLogin);
+	createRoomBtn.addEventListener("click", handleCreateRoom);
+	messageForm.addEventListener("submit", handleMessageSubmit);
+	messageInput.addEventListener("input", handleTyping);
+	leaveRoomBtn.addEventListener("click", leaveRoom);
+	window.addEventListener("beforeunload", handleUnload);
+	roomList.addEventListener("click", handleRoomClick);
 
-// Listen for the welcome message
-socket.on("welcome", (data) => {
-	console.log("Welcome message:", data.message);
-});
+	// Socket Events
+	socket.on("connect", handleConnect);
+	socket.on("disconnect", handleDisconnect);
+	socket.on("roomList", updateRoomList);
+	socket.on("newMessage", handleNewMessage);
+	socket.on("typingUsers", handleTypingUsers);
+	socket.on("userList", handleUserList);
+	socket.on("userLeftRoom", handleUserLeftRoom);
 
-// Display new messages
-socket.on("newMessage", (message) => {
-	console.log("New message:", message);
-	const messagesList = document.getElementById("messages");
-	const messageItem = document.createElement("li");
-	messageItem.textContent = `${message.username}: ${message.content}`;
-	messagesList.appendChild(messageItem);
-});
-
-// Update the online users
-socket.on("userJoined", (data) => {
-	updateUserList(data.onlineUsers);
-});
-
-socket.on("userLeft", (data) => {
-	updateUserList(data.onlineUsers);
-});
-
-// Function to send messages
-function sendMessage() {
-	const input = document.getElementById("messageInput");
-	if (!currentRoom) {
-		showToast("You must join a room first😉!");
-		input.value = "";
-		return;
+	function handleLogin(e) {
+		e.preventDefault();
+		const username = usernameInput.value.trim();
+		if (username.length < 3 || username.length > 20) {
+			showToast("Username must be between 3-20 characters", "error");
+			return;
+		}
+		currentUser = username;
+		socket.emit("join", { username });
+		loginContainer.classList.add("hidden");
+		chatContainer.classList.remove("hidden");
 	}
-	const content = input.value.trim();
-	if (content) {
-		socket.emit("message", { content, room: currentRoom });
-		input.value = "";
+
+	function handleCreateRoom() {
+		const roomName = newRoomInput.value.trim();
+		if (!roomName) return;
+		socket.emit("createRoom", roomName);
+		newRoomInput.value = "";
 	}
-}
 
-// Listen for form submission to send a message
-document.getElementById("messageForm").addEventListener("submit", function (e) {
-	e.preventDefault();
-	sendMessage();
-});
-
-// Join a room
-function joinRoom(room) {
-	currentRoom = room;
-	socket.emit("joinRoom", room);
-}
-
-// Leave the current room
-function leaveRoom() {
-	if (currentRoom) {
-		socket.emit("leaveRoom", currentRoom);
-		currentRoom = "";
-
-		document.getElementById("messages").innerHTML = "";
+	function handleRoomClick(e) {
+		const roomItem = e.target.closest(".room-item");
+		if (roomItem) {
+			const roomName = roomItem.dataset.room;
+			joinRoom(roomName);
+			document.querySelectorAll(".room-item").forEach((item) => {
+				item.classList.remove("active");
+			});
+			roomItem.classList.add("active");
+		}
 	}
-}
 
-// Update the list of users
-function updateUserList(users) {
-	const userList = document.getElementById("userList");
-	// Clear the current list
-	userList.innerHTML = "";
+	function updateRoomList(rooms) {
+		roomList.innerHTML = rooms
+			.map(
+				(room) => `
+          <li class="room-item" 
+              data-room="${room}"
+              role="button"
+              aria-label="Join ${room} room">
+              <i class="fa-solid fa-hashtag"></i>
+              ${room}
+          </li>
+      `
+			)
+			.join("");
+	}
 
-	const title = document.createElement("h3");
-	title.textContent = "Online Users:";
-	userList.appendChild(title);
+	function joinRoom(roomName) {
+		if (activeRoom === roomName) return;
+		activeRoom = roomName;
+		currentRoomName.textContent = roomName;
+		messageForm.classList.remove("hidden");
+		socket.emit("joinRoom", roomName);
+		loadMessageHistory(roomName);
+		messageInput.focus();
+	}
 
-	users.forEach((user) => {
-		const userItem = document.createElement("div");
-		userItem.textContent = user.username;
-		userList.appendChild(userItem);
-	});
-}
+	function loadMessageHistory(roomName) {
+		messagesEl.innerHTML =
+			messageHistory.get(roomName)?.map(createMessageElement).join("") || "";
+		scrollToBottom();
+	}
 
-function showToast(message, duration = 3000) {
-	const container = document.getElementById("notification-container");
-	const toast = document.createElement("div");
-	toast.className = "toast";
-	toast.textContent = message;
-	container.appendChild(toast);
+	function handleNewMessage(message) {
+		if (!messageHistory.has(message.room)) {
+			messageHistory.set(message.room, []);
+		}
+		messageHistory.get(message.room).push(message);
+		if (message.room === activeRoom) {
+			messagesEl.insertAdjacentHTML("beforeend", createMessageElement(message));
+			scrollToBottom();
+		}
+	}
 
-	toast.offsetHeight;
-	toast.classList.add("show");
+	function createMessageElement(message) {
+		const isSelf = message.username === currentUser;
+		return `
+          <div class="message ${isSelf ? "self" : ""}">
+              <header class="message-header">
+                  <span class="username">${message.username}</span>
+                  <time class="timestamp">${formatTime(
+										message.timestamp
+									)}</time>
+              </header>
+              <p class="content">${sanitize(message.content)}</p>
+          </div>
+      `;
+	}
 
-	setTimeout(() => {
-		toast.classList.remove("show");
-		toast.addEventListener("transitionend", () => {
-			toast.remove();
-		});
-	}, duration);
-}
+	function handleMessageSubmit(e) {
+		e.preventDefault();
+		const content = messageInput.value.trim();
+		if (!content || !activeRoom) return;
 
-// Handle errors
-socket.on("error", (error) => {
-	console.error("Server error:", error);
-});
+		const message = {
+			content: sanitize(content),
+			room: activeRoom,
+			username: currentUser,
+			timestamp: Date.now(),
+		};
 
-socket.on("reconnect_attempt", () => {
-	console.log("Reconnection attempt...");
+		socket.emit("message", message);
+		messageInput.value = "";
+		updateCharCounter(500);
+	}
+
+	function handleTyping() {
+		if (!isTyping) {
+			isTyping = true;
+			socket.emit("typing", activeRoom);
+		}
+		clearTimeout(typingTimeout);
+		typingTimeout = setTimeout(() => {
+			isTyping = false;
+			socket.emit("stopTyping", activeRoom);
+		}, 1000);
+		updateCharCounter(500 - this.value.length);
+	}
+
+	function handleTypingUsers(userIds) {
+		const typingUsers = Array.from(connectedUsers.values())
+			.filter((user) => userIds.includes(user.id))
+			.map((user) => user.username);
+
+		typingIndicator.textContent =
+			typingUsers.length > 0
+				? `${typingUsers.join(", ")} ${
+						typingUsers.length > 1 ? "are" : "is"
+				  } typing...`
+				: "";
+	}
+
+	function handleUserList(users) {
+		connectedUsers = new Map(users.map((user) => [user.id, user]));
+	}
+
+	function handleUserLeftRoom(data) {
+		showToast(`${data.username} left the room`, "info");
+	}
+
+	function updateCharCounter(remaining) {
+		charCounter.textContent = `${remaining}/500`;
+		charCounter.style.color = remaining < 50 ? "#e74c3c" : "#7f8c8d";
+	}
+
+	function scrollToBottom() {
+		messagesEl.scrollTop = messagesEl.scrollHeight;
+	}
+
+	function sanitize(text) {
+		const div = document.createElement("div");
+		div.textContent = text;
+		return div.innerHTML;
+	}
+
+	function formatTime(timestamp) {
+		const options = { hour: "numeric", minute: "2-digit" };
+		return new Date(timestamp).toLocaleTimeString([], options);
+	}
+
+	function showToast(message, type = "info", duration = 3000) {
+		const toast = document.createElement("div");
+		toast.className = `toast ${type}`;
+		toast.innerHTML = `
+          <i class="fas ${getToastIcon(type)}"></i>
+          <span>${message}</span>
+      `;
+		document.getElementById("notification-container").appendChild(toast);
+		setTimeout(() => toast.remove(), duration);
+	}
+
+	function getToastIcon(type) {
+		const icons = {
+			error: "fa-exclamation-circle",
+			success: "fa-check-circle",
+			info: "fa-info-circle",
+		};
+		return icons[type] || "fa-info-circle";
+	}
+
+	function handleConnect() {
+		connectionStatus.className = "connected";
+		connectionStatus.textContent = "Connected";
+	}
+
+	function handleDisconnect() {
+		connectionStatus.className = "disconnected";
+		connectionStatus.textContent = "Reconnecting...";
+	}
+
+	function handleUnload() {
+		socket.emit("leave", currentUser);
+	}
+
+	function leaveRoom() {
+		if (activeRoom) {
+			socket.emit("leaveRoom", activeRoom);
+			activeRoom = null;
+			currentRoomName.textContent = "Select a Room";
+			messageForm.classList.add("hidden");
+			messagesEl.innerHTML = "";
+		}
+	}
 });

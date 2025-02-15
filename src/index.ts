@@ -8,7 +8,12 @@ import path from "path";
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+	cors: {
+		origin: "*",
+		methods: ["GET", "POST"],
+	},
+});
 
 // Express middlewares and static files
 app.use(express.json());
@@ -24,39 +29,81 @@ app.get("/", (req: Request, res: Response) => {
 const chat = io.of("/chat");
 
 interface Message {
-	id: number;
+	id: string;
 	userId: string;
 	username: string;
 	content: string;
 	timestamp: Date;
-	room?: string;
+	room: string;
 }
 
 interface User {
 	id: string;
 	username: string;
 	joinedAt: Date;
+	lastActive: Date;
+	rooms: Set<string>;
 }
 
-// Global data structures for messages and connected users
-const messages: Message[] = [];
-const connectedUsers: Map<string, User> = new Map();
+interface Room {
+	name: string;
+	users: Map<string, User>;
+	messages: Message[];
+	typingUsers: Set<string>;
+}
+
+// Global data structures
+const connectedUsers = new Map<string, User>();
+const rooms = new Map<string, Room>();
+const MESSAGE_HISTORY_LIMIT = 100;
 
 // Logger function for WebSocket events
 const wsLogger = (event: string, ...args: any[]) => {
 	console.log(`[WebSocket][${new Date().toISOString()}] ${event}:`, ...args);
 };
 
+// Room management
+function createRoom(name: string): Room {
+	const room: Room = {
+		name,
+		users: new Map(),
+		messages: [],
+		typingUsers: new Set(),
+	};
+	rooms.set(name, room);
+	return room;
+}
+
+function getOrCreateRoom(name: string): Room {
+	return rooms.get(name) || createRoom(name);
+}
+
 // Handle user disconnection
 function handleUserDisconnect(socket: Socket) {
 	const user = connectedUsers.get(socket.id);
 	if (user) {
-		connectedUsers.delete(socket.id);
-		chat.emit("userLeft", {
-			userId: socket.id,
-			username: user.username,
-			onlineUsers: Array.from(connectedUsers.values()),
+		user.rooms.forEach((roomName) => {
+			const room = rooms.get(roomName);
+			if (room) {
+				room.users.delete(socket.id);
+				room.typingUsers.delete(socket.id);
+				chat.to(roomName).emit("userLeftRoom", {
+					userId: user.id,
+					username: user.username,
+				});
+			}
 		});
+
+		connectedUsers.delete(socket.id);
+		chat.emit(
+			"userList",
+			Array.from(connectedUsers.values()).map((user) => ({
+				id: user.id,
+				username: user.username,
+				joinedAt: user.joinedAt,
+				lastActive: user.lastActive,
+			}))
+		);
 		wsLogger("leave", `User ${user.username} left the chat`);
 	}
 }
@@ -66,7 +113,7 @@ function handleError(socket: Socket, event: string, error: any) {
 	console.error(`[ERROR][${event}]`, error);
 	socket.emit("error", {
 		event,
-		message: "An error occurred on the server",
+		message: error.message || "An error occurred on the server",
 		timestamp: new Date(),
 	});
 }
@@ -75,122 +122,165 @@ function handleError(socket: Socket, event: string, error: any) {
 chat.on("connection", (socket: Socket) => {
 	console.log(`Client connected to /chat, ID: ${socket.id}`);
 
-	// Send welcome message
-	socket.emit("welcome", { message: "Welcome to the messaging server" });
+	// Initial setup
+	socket.emit("welcome", {
+		message: "Welcome to SocketChat",
+		serverTime: new Date().toISOString(),
+	});
 
 	// Join event
 	socket.on("join", (userData: { username: string }) => {
 		try {
-			connectedUsers.set(socket.id, {
+			if (!userData.username || userData.username.length < 3) {
+				throw new Error("Username must be at least 3 characters");
+			}
+
+			const user: User = {
 				id: socket.id,
-				username: userData.username,
+				username: userData.username.trim(),
 				joinedAt: new Date(),
-			});
+				lastActive: new Date(),
+				rooms: new Set(),
+			};
+
+			connectedUsers.set(socket.id, user);
+			chat.emit("userList", Array.from(connectedUsers.values()));
+			socket.emit("roomList", Array.from(rooms.keys()));
+
 			wsLogger("join", `User ${userData.username} joined`);
-			chat.emit("userJoined", {
-				userId: socket.id,
-				username: userData.username,
-				onlineUsers: Array.from(connectedUsers.values()),
-			});
 		} catch (error) {
 			handleError(socket, "join", error);
 		}
 	});
 
-	// Join room event
-	socket.on("joinRoom", (room: string) => {
+	// Room management events
+	socket.on("createRoom", (roomName: string) => {
 		try {
-			socket.join(room);
-			const user = connectedUsers.get(socket.id);
-			if (user) {
-				const roomMessage: Message = {
-					id: Date.now(),
-					userId: socket.id,
-					username: user.username,
-					content: `User ${user.username} joined ${room}`,
-					timestamp: new Date(),
-					room: room,
-				};
-				chat.to(room).emit("newMessage", roomMessage);
-				wsLogger("joinRoom", `User ${user.username} joined ${room}`);
+			if (!roomName || roomName.length < 3) {
+				throw new Error("Room name must be at least 3 characters");
 			}
+
+			if (rooms.has(roomName)) {
+				throw new Error("Room already exists");
+			}
+
+			const room = createRoom(roomName);
+			chat.emit("roomList", Array.from(rooms.keys()));
+			wsLogger("createRoom", `Room ${roomName} created`);
+		} catch (error) {
+			handleError(socket, "createRoom", error);
+		}
+	});
+
+	socket.on("joinRoom", (roomName: string) => {
+		try {
+			const user = connectedUsers.get(socket.id);
+			if (!user) throw new Error("User not authenticated");
+
+			const room = getOrCreateRoom(roomName);
+
+			// Leave previous rooms
+			user.rooms.forEach((existingRoom) => {
+				socket.leave(existingRoom);
+				room.users.delete(user.id);
+			});
+			user.rooms.clear();
+
+			// Join new room
+			user.rooms.add(roomName);
+			room.users.set(user.id, user);
+			socket.join(roomName);
+
+			// Send room history
+			socket.emit(
+				"messageHistory",
+				room.messages.slice(-MESSAGE_HISTORY_LIMIT)
+			);
+
+			// Notify room
+			const joinMessage: Message = {
+				id: Date.now().toString(),
+				userId: "system",
+				username: "System",
+				content: `${user.username} joined the room`,
+				timestamp: new Date(),
+				room: roomName,
+			};
+
+			room.messages.push(joinMessage);
+			chat.to(roomName).emit("newMessage", joinMessage);
+			wsLogger("joinRoom", `User ${user.username} joined ${roomName}`);
 		} catch (error) {
 			handleError(socket, "joinRoom", error);
 		}
 	});
 
-	// Leave room event
-	socket.on("leaveRoom", (room: string) => {
-		try {
-			socket.leave(room);
-			const user = connectedUsers.get(socket.id);
-			if (user) {
-				const roomMessage: Message = {
-					id: Date.now(),
-					userId: socket.id,
-					username: user.username,
-					content: `User ${user.username} left room ${room}`,
-					timestamp: new Date(),
-					room: room,
-				};
-				chat.to(room).emit("newMessage", roomMessage);
-				wsLogger("leaveRoom", `User ${user.username} left room ${room}`);
-			}
-		} catch (error) {
-			handleError(socket, "leaveRoom", error);
-		}
-	});
-
-	// Message event for sending messages
-	socket.on("message", (data: { content: string; room?: string }) => {
+	// Message handling
+	socket.on("message", (data: { content: string; room: string }) => {
 		try {
 			const user = connectedUsers.get(socket.id);
 			if (!user) throw new Error("User not authenticated");
+			if (!data.room) throw new Error("Room not specified");
 
-			// Check if the user has joined a room
-			if (!data.room) {
-				socket.emit("error", {
-					message: "You must join a room before sending messages",
-				});
-				return;
-			}
+			const room = rooms.get(data.room);
+			if (!room) throw new Error("Room does not exist");
 
-			const messageData: Message = {
-				id: Date.now(),
-				userId: socket.id,
+			const message: Message = {
+				id: Date.now().toString(),
+				userId: user.id,
 				username: user.username,
-				content: data.content,
+				content: data.content.substring(0, 500),
 				timestamp: new Date(),
 				room: data.room,
 			};
 
-			messages.push(messageData);
-			wsLogger("message", `Message from ${user.username}: ${data.content}`);
-			// Emit message to the specified room if provided, otherwise to all
-			if (data.room) {
-				chat.to(data.room).emit("newMessage", messageData);
-			} else {
-				chat.emit("newMessage", messageData);
+			// Store message and maintain history limit
+			room.messages.push(message);
+			if (room.messages.length > MESSAGE_HISTORY_LIMIT) {
+				room.messages.shift();
 			}
+
+			chat.to(data.room).emit("newMessage", message);
+			wsLogger("message", `Message from ${user.username} in ${data.room}`);
 		} catch (error) {
 			handleError(socket, "message", error);
 		}
 	});
 
-	// Leave event
-	socket.on("leave", () => {
+	// Typing indicators
+	socket.on("typing", (roomName: string) => {
 		try {
-			handleUserDisconnect(socket);
+			const user = connectedUsers.get(socket.id);
+			const room = rooms.get(roomName);
+
+			if (user && room) {
+				room.typingUsers.add(user.id);
+				chat.to(roomName).emit("typingUsers", Array.from(room.typingUsers));
+			}
 		} catch (error) {
-			handleError(socket, "leave", error);
+			handleError(socket, "typing", error);
 		}
 	});
 
-	// Disconnect event
+	socket.on("stopTyping", (roomName: string) => {
+		try {
+			const user = connectedUsers.get(socket.id);
+			const room = rooms.get(roomName);
+
+			if (user && room) {
+				room.typingUsers.delete(user.id);
+				chat.to(roomName).emit("typingUsers", Array.from(room.typingUsers));
+			}
+		} catch (error) {
+			handleError(socket, "stopTyping", error);
+		}
+	});
+
+	// Disconnect handler
 	socket.on("disconnect", () => {
 		try {
-			wsLogger("disconnect", `Client disconnected - ID: ${socket.id}`);
 			handleUserDisconnect(socket);
+			wsLogger("disconnect", `Client disconnected - ID: ${socket.id}`);
 		} catch (error) {
 			handleError(socket, "disconnect", error);
 		}
