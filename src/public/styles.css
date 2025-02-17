@@ -1,1 +1,572 @@
+/* ====================================================
+   Reset
+==================================================== */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
 
+/* ====================================================
+   Root Variables (Light Theme)
+==================================================== */
+:root {
+	--color-primary: #f8f9fa;
+	--color-secondary: #2c3e50;
+	--color-accent: #3498db;
+	--color-success: #27ae60;
+	--color-error: #e74c3c;
+	--text-primary: #2c3e50;
+	--text-secondary: #ffffff;
+	--color-lightblue: #a8d0e6;
+	--spacing-sm: 0.5rem;
+	--spacing-md: 1rem;
+	--spacing-lg: 1.5rem;
+	--border-radius: 8px;
+	--border: 1px solid #dfe6e9;
+	--shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+	--shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+	--font-family: "Poppins", sans-serif;
+}
+
+/* ====================================================
+   Dark Mode (Manual Toggle)
+==================================================== */
+body.dark-mode {
+	--color-primary: #2c3e50;
+	--color-secondary: #34495e;
+	--color-accent: #2980b9;
+	--text-primary: #ecf0f1;
+	--text-secondary: #ffffff;
+}
+
+body.dark-mode #chatArea {
+	background: var(--color-secondary);
+}
+
+body.dark-mode .message:not(.self) {
+	background: rgba(255, 255, 255, 0.1);
+	color: var(--text-secondary);
+}
+
+body:not(.dark-mode) .message:not(.self) {
+	background: #e0e0e0;
+}
+
+body:not(.dark-mode) #leaveRoomBtn {
+	color: var(--color-secondary);
+}
+
+/* ====================================================
+   Base Styles
+==================================================== */
+body {
+	font-family: var(--font-family);
+	line-height: 1.6;
+	background: var(--color-primary);
+	color: var(--text-primary);
+	padding: var(--spacing-md);
+}
+
+/* ====================================================
+   Utility Classes
+==================================================== */
+.hidden {
+	display: none !important;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+}
+
+/* ====================================================
+   Main Header (Global)
+==================================================== */
+#mainHeader {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	padding: var(--spacing-md);
+}
+
+#mainHeader h1 {
+	font-size: 2rem;
+}
+
+/* ====================================================
+   Dark Mode Toggle (Global)
+==================================================== */
+#themeToggle {
+	position: fixed;
+	top: var(--spacing-md);
+	right: var(--spacing-md);
+	background: transparent;
+	border: none;
+	font-size: 1.5rem;
+	color: var(--text-primary);
+	cursor: pointer;
+	transition: color 0.3s ease;
+	z-index: 1000;
+}
+
+/* ====================================================
+   Layout & Containers
+==================================================== */
+#login-container {
+	max-width: 400px;
+	margin: 2rem auto;
+}
+
+#loginForm {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+}
+
+#chat-container {
+	display: grid;
+	grid-template-columns: 250px 1fr;
+	gap: var(--spacing-md);
+	max-width: 1200px;
+	margin: 0 auto;
+	height: 80vh;
+}
+
+#sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+	padding: var(--spacing-md);
+	background: var(--color-secondary);
+	color: var(--text-secondary);
+	border-radius: var(--border-radius);
+}
+
+.room-management {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+.new-room {
+	display: flex;
+	gap: var(--spacing-sm);
+}
+
+#roomList {
+	list-style: none;
+	overflow-y: auto;
+	flex-grow: 1;
+}
+
+/* Room item styles with room-info for proper icon spacing */
+.room-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-sm);
+	border-radius: var(--border-radius);
+	cursor: pointer;
+	transition: background 0.2s;
+}
+
+.room-item:hover {
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.room-item.active {
+	background: var(--color-accent);
+	font-weight: bold;
+}
+
+.room-info {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	flex: 1;
+}
+
+body:not(.dark-mode) .room-info:hover {
+	background-color: #f9f9fa;
+}
+
+body:not(.dark-mode) .room-info:hover i,
+body:not(.dark-mode) .room-info:hover span {
+	color: #e74c3c;
+}
+
+.room-info i.fa-hashtag {
+	flex-shrink: 0;
+	width: 20px;
+	text-align: center;
+}
+
+.user-management {
+	margin-top: var(--spacing-md);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+.user-management h3 {
+	margin-bottom: var(--spacing-sm);
+}
+
+#userListConnected {
+	list-style: none;
+	padding: 0;
+}
+
+#userListConnected li {
+	margin-bottom: var(--spacing-sm);
+	padding: var(--spacing-sm);
+	border-radius: var(--border-radius);
+	background: rgba(255, 255, 255, 0.1);
+	cursor: default;
+}
+
+/* ====================================================
+   Chat Area
+==================================================== */
+#chatArea {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+	background: #fff;
+	padding: var(--spacing-md);
+	border-radius: var(--border-radius);
+	box-shadow: var(--shadow-md);
+}
+
+#chatHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-md);
+	background: var(--color-primary);
+	border-radius: var(--border-radius);
+	margin-bottom: var(--spacing-md);
+}
+
+.header-info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+#messages {
+	flex-grow: 1;
+	overflow-y: auto;
+	padding: var(--spacing-md);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+	scroll-behavior: smooth;
+}
+
+/* ====================================================
+   Messages
+==================================================== */
+.message {
+	max-width: 80%;
+	padding: var(--spacing-sm);
+	border-radius: var(--border-radius);
+	background: #fff;
+	animation: messageIn 0.3s ease;
+}
+
+.message:hover {
+	transform: translateX(5px);
+}
+
+.message-header {
+	display: flex;
+	align-items: baseline;
+	gap: var(--spacing-sm);
+	margin-bottom: 0.3rem;
+}
+
+.username {
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+.message.self {
+	align-self: flex-end;
+	background: var(--color-accent);
+	color: white;
+}
+
+.timestamp {
+	font-size: 0.75rem;
+	opacity: 0.8;
+}
+
+.content {
+	word-break: break-word;
+	line-height: 1.4;
+}
+
+/* ====================================================
+   Animations
+==================================================== */
+@keyframes messageIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* ====================================================
+   Typing Indicator
+==================================================== */
+#typingIndicator {
+	min-height: 20px;
+	font-style: italic;
+	color: #7f8c8d;
+}
+
+/* ====================================================
+   Message Form
+==================================================== */
+#messageForm {
+	display: flex;
+	gap: var(--spacing-sm);
+	padding-top: var(--spacing-md);
+	border-top: var(--border);
+}
+
+.input-container {
+	flex-grow: 1;
+	position: relative;
+}
+
+/* Make the message input take full width */
+#messageInput {
+	width: 100%;
+	padding: var(--spacing-sm) var(--spacing-md);
+	border: 2px solid var(--color-secondary);
+	border-radius: var(--border-radius);
+	transition: all 0.3s ease;
+}
+
+#messageInput:focus {
+	border-color: var(--color-accent);
+	box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+#newRoomInput {
+	padding: var(--spacing-sm);
+	border: 2px solid var(--color-secondary);
+	border-radius: var(--border-radius);
+	transition: all 0.3s ease;
+}
+
+.submitBtn {
+	color: white;
+	background: var(--color-accent);
+	padding: var(--spacing-sm) var(--spacing-md);
+	border-radius: var(--border-radius);
+	transition: all 0.3s ease;
+}
+
+.submitBtn:hover {
+	background: var(--color-secondary);
+	color: white;
+	transform: translateY(-1px);
+}
+
+#createRoomBtn {
+	color: white;
+	font-size: 1rem;
+	background: var(--color-accent);
+	border: none;
+	border-radius: var(--border-radius);
+	padding: var(--spacing-sm) var(--spacing-sm);
+	transition: all 0.3s ease;
+}
+
+#createRoomBtn:hover {
+	color: white;
+	background: var(--color-secondary);
+	border: 1px solid var(--color-accent);
+	border-radius: var(--border-radius);
+	transform: translateY(-1px);
+}
+
+#leaveRoomBtn {
+	color: white;
+	font-size: 1.5rem;
+	background: transparent;
+	border: none;
+	padding: var(--spacing-sm) var(--spacing-md);
+	transition: all 0.3s ease;
+}
+
+#leaveRoomBtn:hover {
+	background-color: rgba(231, 76, 60, 0.1);
+	color: #e74c3c;
+	border-radius: var(--border-radius);
+}
+
+.delete-room-btn {
+	background: transparent;
+	border: none;
+	color: #fff;
+	cursor: pointer;
+	margin-left: var(--spacing-md);
+}
+
+.delete-room-btn:hover {
+	color: #c0392b;
+}
+
+#usernameInput {
+	padding: var(--spacing-sm);
+	border: 2px solid var(--color-secondary);
+	border-radius: var(--border-radius);
+	transition: all 0.3s ease;
+}
+
+#charCounter {
+	position: absolute;
+	right: var(--spacing-sm);
+	bottom: var(--spacing-sm);
+	font-size: 0.8rem;
+	color: #7f8c8d;
+}
+
+/* ====================================================
+   Notifications
+==================================================== */
+#notification-container {
+	position: fixed;
+	top: var(--spacing-md);
+	right: var(--spacing-md);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+.toast {
+	padding: var(--spacing-sm) var(--spacing-md);
+	border-radius: var(--border-radius);
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	animation: toastIn 0.3s ease;
+}
+
+.toast.success {
+	background: var(--color-success);
+	color: white;
+}
+
+.toast.error {
+	background: var(--color-error);
+	color: white;
+}
+
+.toast.info {
+	background: var(--color-secondary);
+	color: white;
+}
+
+@keyframes toastIn {
+	from {
+		transform: translateX(100%);
+	}
+	to {
+		transform: translateX(0);
+	}
+}
+
+/* ====================================================
+   Connection Status
+==================================================== */
+#connectionStatus::before {
+	content: "";
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	margin-right: 0.5rem;
+}
+
+#connectionStatus.connected::before {
+	background: var(--color-success);
+}
+
+#connectionStatus.disconnected::before {
+	background: var(--color-error);
+}
+
+/* ====================================================
+   Responsive Design
+==================================================== */
+@media (max-width: 768px) {
+	#chat-container {
+		grid-template-columns: 1fr;
+		height: auto;
+	}
+	#sidebar {
+		order: 2;
+	}
+	#chatArea {
+		order: 1;
+	}
+	.submitBtn,
+	#usernameInput,
+	#messageInput,
+	#newRoomInput {
+		font-size: 1rem;
+	}
+}
+
+/* ====================================================
+   Light Mode Sidebar Overrides
+==================================================== */
+body:not(.dark-mode) #sidebar {
+	background: #fefffe;
+	color: #2c3f50;
+}
+
+body:not(.dark-mode) #sidebar * {
+	color: #2c3f50;
+}
+
+body:not(.dark-mode) #leaveRoomBtn:hover {
+	color: #e74c3c;
+}
+
+body:not(.dark-mode) #leaveRoomBtn:hover {
+	color: #e74c3c;
+}
+
+body:not(.dark-mode) #roomList > li > button > i:hover {
+	color: #e74c3c;
+}
+
+body:not(.dark-mode) #roomList > li :hover {
+	background-color: #f9f9fa;
+}
+
+body:not(.dark-mode) #createRoomBtn:hover > i {
+	color: #ffffff;
+}
+
+body:not(.dark-mode) #userListConnected > li {
+	background-color: #f9f9fa;
+}

@@ -1,4 +1,3 @@
-<!-- src\public\index.html -->
 <!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -11,10 +10,18 @@
 			rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
 		/>
-		<link rel="stylesheet" href="/styles2.css" />
+		<link rel="stylesheet" href="/styles.css" />
 	</head>
 	<body>
-		<h1>SocketChat <i class="fa-solid fa-comments"></i></h1>
+		<!-- Main header with title and global dark mode toggle -->
+		<header id="mainHeader">
+			<h1>SocketChat <i class="fa-solid fa-comments"></i></h1>
+		</header>
+		<!-- Global dark mode toggle button (positioned fixed en la esquina superior derecha) -->
+		<button id="themeToggle" class="iconBtn" title="Toggle Dark Mode">
+			<i class="fa-solid fa-moon"></i>
+		</button>
+
 		<div class="main-container">
 			<div id="login-container">
 				<form id="loginForm">
@@ -46,24 +53,61 @@
 						</div>
 					</div>
 					<ul id="roomList"></ul>
+					<div class="user-management">
+						<h3><i class="fa-solid fa-user"></i> Online Users</h3>
+						<ul id="userListConnected"></ul>
+					</div>
 				</aside>
 
 				<section id="chatArea">
 					<header id="chatHeader">
-						<div>
-							<h2 id="currentRoomName">Select a Room</h2>
-							<span id="connectionStatus" class="connected"></span>
+						<div class="header-info">
+							<h2 id="currentRoomName">Sala</h2>
+							<span id="connectionStatus" class="connected">Connected</span>
 						</div>
 						<button id="leaveRoomBtn" class="submitBtn">
-							<i class="fa-solid fa-arrow-right-from-bracket"></i> Leave
+							<i class="fa-solid fa-arrow-right-from-bracket"></i> Leave Room
 						</button>
 					</header>
 
-					<ul id="messages"></ul>
+					<ul id="messages">
+						<!-- Ejemplo de mensajes -->
+						<div class="message self">
+							<header class="message-header">
+								<span class="username">Antonio</span>
+								<time class="timestamp">12:25</time>
+							</header>
+							<p class="content">hola</p>
+						</div>
+
+						<div class="message">
+							<header class="message-header">
+								<span class="username">Pepe</span>
+								<time class="timestamp">12:26</time>
+							</header>
+							<p class="content">hola</p>
+						</div>
+
+						<div class="message">
+							<header class="message-header">
+								<span class="username">Pepe</span>
+								<time class="timestamp">12:26</time>
+							</header>
+							<p class="content">hola</p>
+						</div>
+
+						<div class="message self">
+							<header class="message-header">
+								<span class="username">Antonio</span>
+								<time class="timestamp">12:26</time>
+							</header>
+							<p class="content">hola</p>
+						</div>
+					</ul>
 
 					<div id="typingIndicator"></div>
 
-					<form id="messageForm" class="hidden">
+					<form id="messageForm">
 						<div class="input-container">
 							<input
 								type="text"

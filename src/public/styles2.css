@@ -21,6 +21,7 @@
 	--color-error: #e74c3c;
 	--text-primary: #2c3e50;
 	--text-secondary: #ffffff;
+	--color-lightblue: #a8d0e6;
 
 	/* Spacing */
 	--spacing-sm: 0.5rem;
@@ -34,24 +35,44 @@
 	/* Shadows */
 	--shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
 	--shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+	/* Font */
+	--font-family: "Poppins", sans-serif;
 }
 
 /* ====================================================
-   Dark Theme Variables
+   Dark Mode (Manual Toggle)
 ==================================================== */
-@media (prefers-color-scheme: dark) {
-	:root {
-		--color-primary: #2c3e50;
-		--color-secondary: #34495e;
-		--text-primary: #ecf0f1;
-	}
+body.dark-mode {
+	--color-primary: #2c3e50;
+	--color-secondary: #34495e;
+	--color-accent: #2980b9;
+	--text-primary: #ecf0f1;
+	--text-secondary: #ffffff;
+}
+
+body.dark-mode #chatArea {
+	background: var(--color-secondary);
+}
+
+body.dark-mode .message:not(.self) {
+	background: rgba(255, 255, 255, 0.1);
+	color: var(--text-secondary);
+}
+
+body:not(.dark-mode) .message:not(.self) {
+	background: #e0e0e0;
+}
+
+body:not(.dark-mode) #leaveRoomBtn {
+	color: var(--color-secondary);
 }
 
 /* ====================================================
    Base Styles
 ==================================================== */
 body {
-	font-family: "Poppins", sans-serif;
+	font-family: var(--font-family);
 	line-height: 1.6;
 	background: var(--color-primary);
 	color: var(--text-primary);
@@ -72,6 +93,37 @@ body {
 	padding: 0;
 	margin: -1px;
 	overflow: hidden;
+}
+
+/* ====================================================
+   Main Header (Global)
+==================================================== */
+#mainHeader {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	padding: var(--spacing-md);
+}
+
+#mainHeader h1 {
+	font-size: 2rem;
+}
+
+/* ====================================================
+   Dark Mode Toggle (Global)
+==================================================== */
+#themeToggle {
+	position: fixed;
+	top: var(--spacing-md);
+	right: var(--spacing-md);
+	background: transparent;
+	border: none;
+	font-size: 1.5rem;
+	color: var(--text-primary);
+	cursor: pointer;
+	transition: color 0.3s ease;
+	z-index: 1000;
 }
 
 /* ====================================================
@@ -128,7 +180,11 @@ body {
 	flex-grow: 1;
 }
 
+/* Room item styles with room-info for proper icon spacing */
 .room-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 	padding: var(--spacing-sm);
 	border-radius: var(--border-radius);
 	cursor: pointer;
@@ -144,7 +200,46 @@ body {
 	font-weight: bold;
 }
 
-/* Chat Area */
+.room-info {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	flex: 1;
+}
+
+.room-info i.fa-hashtag {
+	flex-shrink: 0;
+	width: 20px;
+	text-align: center;
+}
+
+.user-management {
+	margin-top: var(--spacing-md);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+.user-management h3 {
+	margin-bottom: var(--spacing-sm);
+}
+
+#userListConnected {
+	list-style: none;
+	padding: 0;
+}
+
+#userListConnected li {
+	margin-bottom: var(--spacing-sm);
+	padding: var(--spacing-sm);
+	border-radius: var(--border-radius);
+	background: rgba(255, 255, 255, 0.1);
+	cursor: default;
+}
+
+/* ====================================================
+   Chat Area
+==================================================== */
 #chatArea {
 	display: flex;
 	flex-direction: column;
@@ -157,11 +252,18 @@ body {
 
 #chatHeader {
 	display: flex;
+	align-items: center;
 	justify-content: space-between;
 	padding: var(--spacing-md);
 	background: var(--color-primary);
 	border-radius: var(--border-radius);
 	margin-bottom: var(--spacing-md);
+}
+
+.header-info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
 }
 
 #messages {
@@ -175,7 +277,7 @@ body {
 }
 
 /* ====================================================
-   Mensajes
+   Messages
 ==================================================== */
 .message {
 	max-width: 80%;
@@ -218,7 +320,7 @@ body {
 }
 
 /* ====================================================
-   Animaciones
+   Animations
 ==================================================== */
 @keyframes messageIn {
 	from {
@@ -250,7 +352,14 @@ body {
 	border-top: var(--border);
 }
 
+.input-container {
+	flex-grow: 1;
+	position: relative;
+}
+
+/* Make the message input take full width */
 #messageInput {
+	width: 100%;
 	padding: var(--spacing-sm) var(--spacing-md);
 	border: 2px solid var(--color-secondary);
 	border-radius: var(--border-radius);
@@ -293,6 +402,14 @@ body {
 	transition: all 0.3s ease;
 }
 
+#createRoomBtn:hover {
+	color: white;
+	background: var(--color-secondary);
+	border: 1px solid var(--color-accent);
+	border-radius: var(--border-radius);
+	transform: translateY(-1px);
+}
+
 #leaveRoomBtn {
 	color: white;
 	font-size: 1.5rem;
@@ -308,16 +425,23 @@ body {
 	border-radius: var(--border-radius);
 }
 
+.delete-room-btn {
+	background: transparent;
+	border: none;
+	color: #fff;
+	cursor: pointer;
+	margin-left: var(--spacing-md);
+}
+
+.delete-room-btn:hover {
+	color: #c0392b;
+}
+
 #usernameInput {
 	padding: var(--spacing-sm);
 	border: 2px solid var(--color-secondary);
 	border-radius: var(--border-radius);
 	transition: all 0.3s ease;
-}
-
-.input-container {
-	flex-grow: 1;
-	position: relative;
 }
 
 #charCounter {
@@ -374,7 +498,7 @@ body {
 }
 
 /* ====================================================
-   Conection Status
+   Connection Status
 ==================================================== */
 #connectionStatus::before {
 	content: "";
@@ -394,23 +518,38 @@ body {
 }
 
 /* ====================================================
-   Dark Theme 
+   Responsive Design
 ==================================================== */
-@media (prefers-color-scheme: dark) {
+@media (max-width: 768px) {
+	#chat-container {
+		grid-template-columns: 1fr;
+		height: auto;
+	}
+	#sidebar {
+		order: 2;
+	}
 	#chatArea {
-		background: var(--color-secondary);
+		order: 1;
 	}
+	/* Increase tap targets and font sizes on small devices */
+	.submitBtn,
+	#usernameInput,
+	#messageInput,
+	#newRoomInput {
+		font-size: 1rem;
+	}
+}
 
-	.message {
-		background: rgba(255, 255, 255, 0.1);
-	}
+/* ====================================================
+   Light Mode Sidebar Overrides
+   (Aplicados solo cuando no se usa dark-mode)
+==================================================== */
+body:not(.dark-mode) #sidebar {
+	background: #fefffe;
+	color: #2c3f50;
+}
 
-	.message.self {
-		background: var(--color-accent);
-	}
-
-	#messageInput {
-		background: #fff;
-		color: rgba(255, 255, 255, 0.1);
-	}
+body:not(.dark-mode) #sidebar * {
+	/* Aseguramos que los elementos internos (incluyendo íconos) usen el color de texto */
+	color: #2c3f50;
 }
