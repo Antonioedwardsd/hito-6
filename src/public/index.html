@@ -13,11 +13,9 @@
 		<link rel="stylesheet" href="/styles.css" />
 	</head>
 	<body>
-		<!-- Main header with title and global dark mode toggle -->
 		<header id="mainHeader">
 			<h1>SocketChat <i class="fa-solid fa-comments"></i></h1>
 		</header>
-		<!-- Global dark mode toggle button (positioned fixed en la esquina superior derecha) -->
 		<button id="themeToggle" class="iconBtn" title="Toggle Dark Mode">
 			<i class="fa-solid fa-moon"></i>
 		</button>
@@ -37,6 +35,7 @@
 				</form>
 			</div>
 
+			<!-- Chat container: visible after login -->
 			<div id="chat-container" class="hidden">
 				<aside id="sidebar">
 					<div class="room-management">
@@ -59,66 +58,45 @@
 					</div>
 				</aside>
 
+				<!-- Chat area now has two parts: a placeholder and the chat interface -->
 				<section id="chatArea">
-					<header id="chatHeader">
-						<div class="header-info">
-							<h2 id="currentRoomName">Sala</h2>
-							<span id="connectionStatus" class="connected">Connected</span>
-						</div>
-						<button id="leaveRoomBtn" class="submitBtn">
-							<i class="fa-solid fa-arrow-right-from-bracket"></i> Leave Room
-						</button>
-					</header>
+					<!-- Room selection placeholder (shown when no room is active) -->
+					<div id="roomPlaceholder">
+						<h2>Welcome to SocketChat!</h2>
+						<p>Please select or create a room to start chatting.</p>
+					</div>
 
-					<ul id="messages">
-						<!-- Ejemplo de mensajes -->
-						<div class="message self">
-							<header class="message-header">
-								<span class="username">Antonio</span>
-								<time class="timestamp">12:25</time>
-							</header>
-							<p class="content">hola</p>
-						</div>
+					<!-- Chat interface (hidden until a room is joined) -->
+					<div id="chatInterface" class="hidden">
+						<header id="chatHeader">
+							<div class="header-info">
+								<h2 id="currentRoomName">Room</h2>
+								<span id="connectionStatus" class="connected">Connected</span>
+							</div>
+							<button id="leaveRoomBtn" class="submitBtn">
+								<i class="fa-solid fa-arrow-right-from-bracket"></i> Leave Room
+							</button>
+						</header>
 
-						<div class="message">
-							<header class="message-header">
-								<span class="username">Pepe</span>
-								<time class="timestamp">12:26</time>
-							</header>
-							<p class="content">hola</p>
-						</div>
+						<ul id="messages">
+							<!-- Messages will be injected here -->
+						</ul>
 
-						<div class="message">
-							<header class="message-header">
-								<span class="username">Pepe</span>
-								<time class="timestamp">12:26</time>
-							</header>
-							<p class="content">hola</p>
-						</div>
+						<div id="typingIndicator"></div>
 
-						<div class="message self">
-							<header class="message-header">
-								<span class="username">Antonio</span>
-								<time class="timestamp">12:26</time>
-							</header>
-							<p class="content">hola</p>
-						</div>
-					</ul>
-
-					<div id="typingIndicator"></div>
-
-					<form id="messageForm">
-						<div class="input-container">
-							<input
-								type="text"
-								id="messageInput"
-								placeholder="Type your message..."
-								maxlength="500"
-							/>
-							<div id="charCounter">500/500</div>
-						</div>
-						<button type="submit" class="submitBtn">Send</button>
-					</form>
+						<form id="messageForm">
+							<div class="input-container">
+								<input
+									type="text"
+									id="messageInput"
+									placeholder="Type your message..."
+									maxlength="500"
+								/>
+								<div id="charCounter">500/500</div>
+							</div>
+							<button type="submit" class="submitBtn">Send</button>
+						</form>
+					</div>
 				</section>
 			</div>
 

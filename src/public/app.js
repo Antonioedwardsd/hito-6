@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
 	const messageHistory = new Map();
 	let isTyping = false;
 	let typingTimeout = null;
-
 	let connectedUsers = new Map();
 
 	// DOM Elements
@@ -17,6 +16,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	const roomList = document.getElementById("roomList");
 	const newRoomInput = document.getElementById("newRoomInput");
 	const createRoomBtn = document.getElementById("createRoomBtn");
+	const roomPlaceholder = document.getElementById("roomPlaceholder");
+	const chatInterface = document.getElementById("chatInterface");
 	const messageForm = document.getElementById("messageForm");
 	const messageInput = document.getElementById("messageInput");
 	const messagesEl = document.getElementById("messages");
@@ -42,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			e.stopPropagation();
 			const roomName = deleteBtn.dataset.room;
 			if (activeRoom === roomName) {
-				showToast("Debes salir de la sala antes de eliminarla", "error");
+				showToast("You must leave the room before deleting it", "error");
 				return;
 			}
 			socket.emit("deleteRoom", roomName);
@@ -80,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	socket.on("typingUsers", handleTypingUsers);
 	socket.on("userList", handleUserList);
 	socket.on("userLeftRoom", handleUserLeftRoom);
-	socket.on("userJoinedRoom", handleUserJoinedRoom); // Handle join notifications
+	socket.on("userJoinedRoom", handleUserJoinedRoom);
 
 	// Handle login event
 	function handleLogin(e) {
@@ -94,6 +95,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		socket.emit("join", { username });
 		loginContainer.classList.add("hidden");
 		chatContainer.classList.remove("hidden");
+		// Show room selection placeholder and hide chat interface
+		roomPlaceholder.classList.remove("hidden");
+		chatInterface.classList.add("hidden");
 	}
 
 	// Handle room creation
@@ -104,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		newRoomInput.value = "";
 	}
 
-	// Update room list with room-info container for proper icon spacing
+	// Update room list
 	function updateRoomList(rooms) {
 		roomList.innerHTML = rooms
 			.map(
@@ -127,14 +131,14 @@ document.addEventListener("DOMContentLoaded", () => {
 	function joinRoom(roomName) {
 		if (activeRoom === roomName) return;
 		activeRoom = roomName;
+		// Hide placeholder and show chat interface
+		roomPlaceholder.classList.add("hidden");
+		chatInterface.classList.remove("hidden");
 		currentRoomName.textContent = roomName;
 		messageForm.classList.remove("hidden");
 		socket.emit("joinRoom", roomName);
 		loadMessageHistory(roomName);
 		messageInput.focus();
-
-		// Set leaveRoomBtn text to "Leave" when joining a room
-		leaveRoomBtn.textContent = "Leave";
 
 		// Update active class in room list
 		document.querySelectorAll(".room-item").forEach((item) => {
@@ -317,26 +321,22 @@ document.addEventListener("DOMContentLoaded", () => {
 	// Leave the room or log out
 	function leaveRoom() {
 		if (activeRoom) {
-			// Emit leaveRoom event to the server
 			socket.emit("leaveRoom", activeRoom);
-
-			// Remove active class from the room item
 			const roomItem = document.querySelector(
 				`.room-item[data-room="${activeRoom}"]`
 			);
 			if (roomItem) {
 				roomItem.classList.remove("active");
 			}
-
 			activeRoom = null;
 			currentRoomName.textContent = "Select a Room";
 			messageForm.classList.add("hidden");
 			messagesEl.innerHTML = "";
-
-			// Change leaveRoomBtn text to "Log Out"
+			// Hide chat interface and show room placeholder
+			chatInterface.classList.add("hidden");
+			roomPlaceholder.classList.remove("hidden");
 			leaveRoomBtn.textContent = "Log Out";
 		} else {
-			// If not in any room, log out: hide chat container and show login container
 			socket.disconnect();
 			chatContainer.classList.add("hidden");
 			loginContainer.classList.remove("hidden");

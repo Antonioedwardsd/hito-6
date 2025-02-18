@@ -194,8 +194,13 @@ body {
 	flex: 1;
 }
 
-body:not(.dark-mode) .room-info:hover {
-	background-color: #f9f9fa;
+body:not(.dark-mode) .room-item.active {
+	background: #3498db;
+}
+
+body:not(.dark-mode) .room-item.active:hover {
+	background: var(--color-accent);
+	transform: none;
 }
 
 body:not(.dark-mode) .room-info:hover i,
@@ -236,6 +241,18 @@ body:not(.dark-mode) .room-info:hover span {
 /* ====================================================
    Chat Area
 ==================================================== */
+#roomPlaceholder {
+	text-align: center;
+	border: 2px dashed var(--color-secondary);
+	margin: auto;
+	padding: 2rem;
+	border-radius: var(--border-radius);
+	background-color: rgba(52, 73, 94, 0.05);
+	color: var(--text-primary);
+	font-size: 1.2rem;
+	max-width: 400px;
+}
+
 #chatArea {
 	display: flex;
 	flex-direction: column;
@@ -244,6 +261,7 @@ body:not(.dark-mode) .room-info:hover span {
 	padding: var(--spacing-md);
 	border-radius: var(--border-radius);
 	box-shadow: var(--shadow-md);
+	height: 100%;
 }
 
 #chatHeader {
@@ -264,12 +282,14 @@ body:not(.dark-mode) .room-info:hover span {
 
 #messages {
 	flex-grow: 1;
+	max-height: 400px;
 	overflow-y: auto;
 	padding: var(--spacing-md);
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-sm);
 	scroll-behavior: smooth;
+	min-height: 0;
 }
 
 /* ====================================================
@@ -345,6 +365,7 @@ body:not(.dark-mode) .room-info:hover span {
 	display: flex;
 	gap: var(--spacing-sm);
 	padding-top: var(--spacing-md);
+	margin-top: auto;
 	border-top: var(--border);
 }
 
@@ -526,6 +547,9 @@ body:not(.dark-mode) .room-info:hover span {
 	}
 	#chatArea {
 		order: 1;
+		height: 80vh;
+		display: flex;
+		flex-direction: column;
 	}
 	.submitBtn,
 	#usernameInput,
@@ -559,7 +583,7 @@ body:not(.dark-mode) #roomList > li > button > i:hover {
 	color: #e74c3c;
 }
 
-body:not(.dark-mode) #roomList > li :hover {
+body:not(.dark-mode) #roomList > li:hover {
 	background-color: #f9f9fa;
 }
 
